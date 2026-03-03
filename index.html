@@ -17,6 +17,11 @@
             --accent-blue: #0066cc;
             --urgent-red: #dc3545;
             --bg-light: #f0f4f8;
+            --status-pending: #ef6c00;
+            --status-approved: #2e7d32;
+            --status-disapproved: #c62828;
+            --status-released: #1565c0;
+            --status-completed: #6a1b9a;
         }
 
         body {
@@ -92,7 +97,35 @@
         .table-responsive { overflow-x: auto; margin: 25px 0; }
         table { width: 100%; border-collapse: collapse; background: white; }
         th { background: var(--primary-navy); color: white; padding: 12px; font-size: 13px; }
-        td { border: 1px solid #eee; padding: 8px; }
+        td { border: 1px solid #eee; padding: 10px; font-size: 13px; }
+
+        /* Status Colors */
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .status-pending { background: #fff3e0; color: var(--status-pending); border: 1px solid var(--status-pending); }
+        .status-approved { background: #e8f5e9; color: var(--status-approved); border: 1px solid var(--status-approved); }
+        .status-disapproved { background: #ffebee; color: var(--status-disapproved); border: 1px solid var(--status-disapproved); }
+        .status-released { background: #e3f2fd; color: var(--status-released); border: 1px solid var(--status-released); }
+        .status-completed { background: #f3e5f5; color: var(--status-completed); border: 1px solid var(--status-completed); }
+
+        /* Filter Section */
+        .tracker-filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+            border: 1px solid #eee;
+        }
 
         /* Signatures */
         .signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
@@ -121,20 +154,20 @@
         }
         .btn-main { background: var(--primary-navy); color: white; }
         .btn-alt { background: #28a745; color: white; }
-        .btn-clear { background: #eee; color: #666; padding: 5px 15px; font-size: 11px; }
+        .btn-clear { background: #eee; color: #666; padding: 8px 15px; font-size: 11px; border-radius: 6px; cursor: pointer; border: 1px solid #ddd; }
 
         @media (max-width: 768px) {
-            .form-row, .signature-grid { grid-template-columns: 1fr; }
+            .form-row, .signature-grid, .tracker-filters { grid-template-columns: 1fr; }
             .container { padding: 20px; }
         }
 
         @media print {
-            .tabs, .btn-group, .btn-clear { display: none !important; }
+            .tabs, .btn-group, .btn-clear, .tracker-filters { display: none !important; }
             .container { box-shadow: none; border: none; }
         }
 
-        /* Status Badge */
-        .status-badge {
+        /* Status Badge for Connection */
+        .conn-badge {
             display: inline-block;
             padding: 2px 8px;
             border-radius: 12px;
@@ -153,7 +186,7 @@
         <button class="tab-btn active" onclick="switchTab('new')">New Request</button>
         <button class="tab-btn" onclick="switchTab('track')">Track Requests</button>
         <div id="connectionStatus" style="margin-left: auto; align-self: center;">
-            <span class="status-badge status-offline">Checking Link...</span>
+            <span class="conn-badge status-offline">Checking Link...</span>
         </div>
     </div>
 
@@ -183,7 +216,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>DEPARTMENT</label>
-                    <input type="text" name="department" required placeholder="Nursing / ER / Lab...">
+                    <input type="text" name="department" id="inputDept" required placeholder="Nursing / ER / Lab...">
                 </div>
                 <div class="form-group">
                     <label>EMAIL ADDRESS</label>
@@ -212,9 +245,7 @@
                             <th>Photo (Optional)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Generated via JS -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
 
@@ -256,8 +287,21 @@
     <div id="tab-track" class="tab-content">
         <div class="header">
             <h1>Live Request Tracker</h1>
-            <p>Recent submissions from your department</p>
+            <p>Recent submissions from all departments</p>
         </div>
+
+        <div class="tracker-filters">
+            <div class="form-group">
+                <label>Search Department</label>
+                <input type="text" id="trackDeptFilter" placeholder="Type department name..." oninput="filterTrackerData()">
+            </div>
+            <div class="form-group">
+                <label>Filter by Date</label>
+                <input type="date" id="trackDateFilter" onchange="filterTrackerData()">
+            </div>
+            <button class="btn-clear" style="height: 45px;" onclick="clearTrackFilters()">Reset Filters</button>
+        </div>
+
         <div class="table-responsive">
             <table id="trackerTable">
                 <thead>
@@ -279,11 +323,10 @@
 </div>
 
 <script>
-    // Ensure this URL is the "Current" Web App URL from Google Apps Script (ends in /exec)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQwVJTvLo_W4IcxPTdcCDojC92XjS4Y5wb1r_ldwO1jXu7LJ99QBMJ_Ncl4FBek239Q/exec";
     let sigPads = { hod: null, admin: null };
+    let trackerCache = [];
 
-    // Initialization
     window.onload = () => {
         setupItemsTable();
         initPads();
@@ -295,10 +338,10 @@
         const badge = document.querySelector('#connectionStatus span');
         if (isOnline) {
             badge.innerText = "Link Active";
-            badge.className = "status-badge status-online";
+            badge.className = "conn-badge status-online";
         } else {
             badge.innerText = "Connection Failed";
-            badge.className = "status-badge status-offline";
+            badge.className = "conn-badge status-offline";
         }
     }
 
@@ -322,7 +365,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${i}</td>
-                <td><input type="text" class="item-name" placeholder="Item details..."></td>
+                <td><input type="text" class="item-name" placeholder="Item description..."></td>
                 <td><input type="number" class="item-qty" placeholder="0" min="0"></td>
                 <td><input type="file" class="item-img" accept="image/*"></td>
             `;
@@ -333,15 +376,11 @@
     function initPads() {
         const hCanvas = document.getElementById('hodPad');
         const aCanvas = document.getElementById('adminPad');
-        
         const resize = (canvas) => {
             canvas.width = canvas.parentElement.offsetWidth;
             canvas.height = canvas.parentElement.offsetHeight;
         };
-
-        resize(hCanvas);
-        resize(aCanvas);
-
+        resize(hCanvas); resize(aCanvas);
         sigPads.hod = new SignaturePad(hCanvas);
         sigPads.admin = new SignaturePad(aCanvas);
     }
@@ -354,32 +393,17 @@
 
     async function fetchReqNumber() {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-            const res = await fetch(`${SCRIPT_URL}?action=getFormNumber`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            if (!res.ok) throw new Error('Network response not ok');
-            
+            const res = await fetch(`${SCRIPT_URL}?action=getFormNumber`);
+            if (!res.ok) throw new Error();
             const num = await res.text();
             document.getElementById('reqNoDisplay').innerText = num;
             updateStatus(true);
         } catch (e) {
-            console.error("Connection Error:", e);
             document.getElementById('reqNoDisplay').innerText = "OFFLINE";
             updateStatus(false);
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Connection Failed',
-                text: 'Could not reach the database. Please check if the Google Script is deployed as a Web App with "Anyone" access.',
-                footer: '<a href="#">Help with Deployment?</a>'
-            });
         }
     }
 
-    // Submission Logic
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         await processSubmission(false);
@@ -394,40 +418,30 @@
     }
 
     async function processSubmission(isPrint) {
-        Swal.fire({ 
-            title: 'Submitting...', 
-            text: 'Uploading data to Google Sheets',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading() 
-        });
+        Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         const items = [];
         const qtys = [];
-        const rows = document.querySelectorAll('#itemsTable tbody tr');
-        
-        rows.forEach(row => {
+        document.querySelectorAll('#itemsTable tbody tr').forEach(row => {
             const name = row.querySelector('.item-name').value;
             const qty = row.querySelector('.item-qty').value;
-            if(name) {
-                items.push(name);
-                qtys.push(qty || "0");
-            }
+            if(name) { items.push(name); qtys.push(qty || "0"); }
         });
 
         if (items.length === 0) {
-            Swal.fire('Empty Request', 'Please add at least one item.', 'warning');
+            Swal.fire('Empty Request', 'Add at least one item.', 'warning');
             return;
         }
 
         const payload = {
             formNum: document.getElementById('reqNoDisplay').innerText,
             priority: document.getElementById('priority').value,
-            dept: document.getElementsByName('department')[0].value,
+            dept: document.getElementById('inputDept').value,
             email: document.getElementsByName('email')[0].value,
             date: document.getElementById('currentDate').value,
             time: document.getElementById('currentTime').value,
             reqBy: document.getElementsByName('requester')[0].value,
-            recBy: document.getElementsByName('remarks')[0].value,
+            recBy: "",
             itemDescs: items.join(" | "),
             itemQtys: qtys.join(" | "),
             sigHod: sigPads.hod.isEmpty() ? "" : sigPads.hod.toDataURL(),
@@ -435,43 +449,67 @@
         };
 
         try {
-            const response = await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', // Standard for cross-origin Apps Script posts
-                body: JSON.stringify(payload) 
-            });
-            
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             Swal.fire('Success', 'Request sent to CSR successfully!', 'success');
             if(isPrint) window.print();
             setTimeout(() => location.reload(), 2500);
         } catch (e) {
-            console.error("Submission Error:", e);
-            Swal.fire('Submission Error', 'Could not save data. Check your internet connection.', 'error');
+            Swal.fire('Error', 'Could not save data.', 'error');
         }
     }
 
     async function fetchTracker() {
         const container = document.getElementById('trackerData');
         container.innerHTML = '<tr><td colspan="6" align="center">Refreshing...</td></tr>';
-        
         try {
             const res = await fetch(`${SCRIPT_URL}?action=getRequests`);
             const data = await res.json();
-            container.innerHTML = data.map(row => `
+            trackerCache = data;
+            renderTrackerTable(trackerCache);
+        } catch (e) {
+            container.innerHTML = '<tr><td colspan="6" style="color:red">Failed to load tracker.</td></tr>';
+        }
+    }
+
+    function renderTrackerTable(data) {
+        const container = document.getElementById('trackerData');
+        if (data.length === 0) {
+            container.innerHTML = '<tr><td colspan="6" align="center">No records found.</td></tr>';
+            return;
+        }
+
+        container.innerHTML = data.sort((a,b) => b.id - a.id).map(row => {
+            const status = row.status || 'Pending';
+            const sClass = status.toLowerCase().replace(/\s/g, '');
+            return `
                 <tr>
                     <td>#${row.id}</td>
                     <td>${row.date}</td>
-                    <td>${row.dept}</td>
+                    <td><b>${row.dept}</b></td>
                     <td style="font-size:11px">${row.items}</td>
                     <td>${row.priority}</td>
-                    <td><span style="color:green">● Sent</span></td>
+                    <td><span class="status-pill status-${sClass}">${status}</span></td>
                 </tr>
-            `).join('') || '<tr><td colspan="6">No recent requests.</td></tr>';
-        } catch (e) {
-            container.innerHTML = '<tr><td colspan="6" style="color:red">Failed to load tracker. Script might be offline.</td></tr>';
-        }
+            `;
+        }).join('');
+    }
+
+    function filterTrackerData() {
+        const deptFilter = document.getElementById('trackDeptFilter').value.toLowerCase();
+        const dateFilter = document.getElementById('trackDateFilter').value;
+        const filtered = trackerCache.filter(item => {
+            const matchDept = !deptFilter || item.dept.toLowerCase().includes(deptFilter);
+            const matchDate = !dateFilter || item.date === dateFilter;
+            return matchDept && matchDate;
+        });
+        renderTrackerTable(filtered);
+    }
+
+    function clearTrackFilters() {
+        document.getElementById('trackDeptFilter').value = '';
+        document.getElementById('trackDateFilter').value = '';
+        renderTrackerTable(trackerCache);
     }
 </script>
-
 </body>
 </html>
