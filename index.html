@@ -251,7 +251,7 @@
 
             <div class="form-group">
                 <label>REMARKS / SPECIAL INSTRUCTIONS</label>
-                <textarea name="remarks" rows="3"></textarea>
+                <textarea name="remarks" id="inputRemarks" rows="3"></textarea>
             </div>
 
             <div class="form-group">
@@ -404,6 +404,14 @@
         }
     }
 
+    // Helper to convert file to Base64
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         await processSubmission(false);
@@ -422,11 +430,27 @@
 
         const items = [];
         const qtys = [];
-        document.querySelectorAll('#itemsTable tbody tr').forEach(row => {
+        const photos = [];
+
+        const rows = document.querySelectorAll('#itemsTable tbody tr');
+        for (let row of rows) {
             const name = row.querySelector('.item-name').value;
             const qty = row.querySelector('.item-qty').value;
-            if(name) { items.push(name); qtys.push(qty || "0"); }
-        });
+            const imgFile = row.querySelector('.item-img').files[0];
+            
+            if(name) { 
+                items.push(name); 
+                qtys.push(qty || "0"); 
+                if (imgFile) {
+                    try {
+                        const b64 = await toBase64(imgFile);
+                        photos.push(b64);
+                    } catch(e) { photos.push(""); }
+                } else {
+                    photos.push("");
+                }
+            }
+        }
 
         if (items.length === 0) {
             Swal.fire('Empty Request', 'Add at least one item.', 'warning');
@@ -444,6 +468,9 @@
             recBy: "",
             itemDescs: items.join(" | "),
             itemQtys: qtys.join(" | "),
+            // Combining item photos into a single string for simplicity or taking the first one
+            photo: photos.find(p => p !== "") || "", 
+            additionalNotes: document.getElementById('inputRemarks').value,
             sigHod: sigPads.hod.isEmpty() ? "" : sigPads.hod.toDataURL(),
             sigAdmin: sigPads.admin.isEmpty() ? "" : sigPads.admin.toDataURL()
         };
