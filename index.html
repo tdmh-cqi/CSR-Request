@@ -171,11 +171,35 @@
             display: inline-block;
         }
         
-        .status-pending { background: #fff3e0; color: var(--status-pending); border: 1px solid var(--status-pending); }
-        .status-approved { background: #e8f5e9; color: var(--status-approved); border: 1px solid var(--status-approved); }
-        .status-disapproved { background: #ffebee; color: var(--status-disapproved); border: 1px solid var(--status-disapproved); }
-        .status-released { background: #e3f2fd; color: var(--status-released); border: 1px solid var(--status-released); }
-        .status-completed { background: #f3e5f5; color: var(--status-completed); border: 1px solid var(--status-completed); }
+        .status-pending { 
+            background: #fff3e0; 
+            color: var(--status-pending); 
+            border: 1px solid var(--status-pending); 
+        }
+        
+        .status-approved { 
+            background: #e8f5e9; 
+            color: var(--status-approved); 
+            border: 1px solid var(--status-approved); 
+        }
+        
+        .status-disapproved { 
+            background: #ffebee; 
+            color: var(--status-disapproved); 
+            border: 1px solid var(--status-disapproved); 
+        }
+        
+        .status-released { 
+            background: #e3f2fd; 
+            color: var(--status-released); 
+            border: 1px solid var(--status-released); 
+        }
+        
+        .status-completed { 
+            background: #f3e5f5; 
+            color: var(--status-completed); 
+            border: 1px solid var(--status-completed); 
+        }
 
         /* Filter Section */
         .tracker-filters {
@@ -237,8 +261,15 @@
             transition: 0.3s;
         }
         
-        .btn-main { background: var(--primary-navy); color: white; }
-        .btn-alt { background: #28a745; color: white; }
+        .btn-main { 
+            background: var(--primary-navy); 
+            color: white; 
+        }
+        
+        .btn-alt { 
+            background: #28a745; 
+            color: white; 
+        }
         
         .btn-clear { 
             background: #eee; 
@@ -251,13 +282,22 @@
         }
 
         @media (max-width: 768px) {
-            .form-row, .signature-grid, .tracker-filters { grid-template-columns: 1fr; }
-            .container { padding: 20px; }
+            .form-row, .signature-grid, .tracker-filters { 
+                grid-template-columns: 1fr; 
+            }
+            .container { 
+                padding: 20px; 
+            }
         }
 
         @media print {
-            .tabs, .btn-group, .btn-clear, .tracker-filters { display: none !important; }
-            .container { box-shadow: none; border: none; }
+            .tabs, .btn-group, .btn-clear, .tracker-filters { 
+                display: none !important; 
+            }
+            .container { 
+                box-shadow: none; 
+                border: none; 
+            }
         }
 
         /* Status Badge for Connection */
@@ -269,8 +309,18 @@
             text-transform: uppercase;
             font-weight: bold;
         }
-        .status-online { background: #e6fffa; color: #38b2ac; border: 1px solid #38b2ac; }
-        .status-offline { background: #fff5f5; color: #e53e3e; border: 1px solid #e53e3e; }
+        
+        .status-online { 
+            background: #e6fffa; 
+            color: #38b2ac; 
+            border: 1px solid #38b2ac; 
+        }
+        
+        .status-offline { 
+            background: #fff5f5; 
+            color: #e53e3e; 
+            border: 1px solid #e53e3e; 
+        }
     </style>
 </head>
 <body>
@@ -310,7 +360,41 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>DEPARTMENT</label>
-                    <input type="text" name="department" id="inputDept" required placeholder="Nursing / ER / Lab...">
+                    <select name="department" id="inputDept" required>
+                        <option value="" disabled selected>Select Department...</option>
+                        <option value="Accounting">Accounting</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Admitting">Admitting</option>
+                        <option value="APE/YAKAP">APE/YAKAP</option>
+                        <option value="Billing">Billing</option>
+                        <option value="Cashier">Cashier</option>
+                        <option value="CQI">CQI</option>
+                        <option value="ER">ER</option>
+                        <option value="HMO">HMO</option>
+                        <option value="HOMES">HOMES</option>
+                        <option value="General Services">General Services</option>
+                        <option value="HR">HR</option>
+                        <option value="IT">IT</option>
+                        <option value="Laboratory">Laboratory</option>
+                        <option value="Medical Record">Medical Record</option>
+                        <option value="NICU">NICU</option>
+                        <option value="NSO">NSO</option>
+                        <option value="OH Nurse">OH Nurse</option>
+                        <option value="OPD">OPD</option>
+                        <option value="OR">OR</option>
+                        <option value="Pharmacy">Pharmacy</option>
+                        <option value="PhilHealth">PhilHealth</option>
+                        <option value="Radiology/XRay">Radiology/XRay</option>
+                        <option value="Releasing">Releasing</option>
+                        <option value="Security">Security</option>
+                        <option value="Social Service">Social Service</option>
+                        <option value="Station 3">Station 3</option>
+                        <option value="Station 4B">Station 4B</option>
+                        <option value="Station 5A">Station 5A</option>
+                        <option value="Station 5B">Station 5B</option>
+                        <option value="Training & Development">Training & Development</option>
+                        <option value="Ultrasound">Ultrasound</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>EMAIL ADDRESS</label>
@@ -422,7 +506,11 @@
     // ** IMPORTANT: REPLACE THIS URL WITH YOUR NEW DEPLOYMENT URL **
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQwVJTvLo_W4IcxPTdcCDojC92XjS4Y5wb1r_ldwO1jXu7LJ99QBMJ_Ncl4FBek239Q/exec";
     
-    let sigPads = { hod: null, admin: null };
+    let sigPads = { 
+        hod: null, 
+        admin: null 
+    };
+    
     let trackerCache = [];
 
     window.onload = () => {
@@ -444,8 +532,12 @@
     }
 
     function switchTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => {
+            c.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+        });
         
         if (tab === 'new') {
             document.getElementById('tab-new').classList.add('active');
@@ -488,10 +580,15 @@
         resizeAndFill(hCanvas); 
         resizeAndFill(aCanvas);
         
-        // CRITICAL FIX: Explicitly tell SignaturePad that the background is white. 
+        // Explicitly tell SignaturePad that the background is white. 
         // This guarantees that it will never produce a black box!
-        sigPads.hod = new SignaturePad(hCanvas, { backgroundColor: 'rgb(255, 255, 255)' });
-        sigPads.admin = new SignaturePad(aCanvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        sigPads.hod = new SignaturePad(hCanvas, { 
+            backgroundColor: 'rgb(255, 255, 255)' 
+        });
+        
+        sigPads.admin = new SignaturePad(aCanvas, { 
+            backgroundColor: 'rgb(255, 255, 255)' 
+        });
     }
 
     function setDefaults() {
@@ -503,7 +600,9 @@
     async function fetchReqNumber() {
         try {
             const res = await fetch(`${SCRIPT_URL}?action=getFormNumber`);
-            if (!res.ok) throw new Error();
+            if (!res.ok) {
+                throw new Error();
+            }
             const num = await res.text();
             document.getElementById('reqNoDisplay').innerText = num;
             updateStatus(true);
@@ -572,7 +671,7 @@
 
     async function processSubmission(isPrint) {
         Swal.fire({ 
-            title: 'Processing Data...', 
+            title: 'Sending to Database...', 
             allowOutsideClick: false, 
             didOpen: () => Swal.showLoading() 
         });
@@ -582,6 +681,7 @@
         const photos = [];
 
         const rows = document.querySelectorAll('#itemsTable tbody tr');
+        
         for (let row of rows) {
             const name = row.querySelector('.item-name').value;
             const qty = row.querySelector('.item-qty').value;
@@ -590,6 +690,7 @@
             if(name) { 
                 items.push(name); 
                 qtys.push(qty || "0"); 
+                
                 if (imgFile) {
                     try {
                         const b64 = await compressImage(imgFile);
@@ -625,7 +726,6 @@
             itemQtys: qtys.join(" | "),
             photo: photos.find(p => p !== "") || "", 
             additionalNotes: document.getElementById('inputRemarks').value,
-            
             sigHod: hodData,
             sigAdmin: adminData
         };
@@ -636,9 +736,17 @@
                 mode: 'no-cors', 
                 body: JSON.stringify(payload) 
             });
+            
             Swal.fire('Success', 'Request sent to CSR successfully!', 'success');
-            if(isPrint) window.print();
-            setTimeout(() => location.reload(), 2500);
+            
+            if(isPrint) {
+                window.print();
+            }
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2500);
+            
         } catch (e) {
             Swal.fire('Error', 'Could not save data. Check connection.', 'error');
         }
@@ -647,6 +755,7 @@
     async function fetchTracker() {
         const container = document.getElementById('trackerData');
         container.innerHTML = '<tr><td colspan="6" align="center">Refreshing...</td></tr>';
+        
         try {
             const res = await fetch(`${SCRIPT_URL}?action=getRequests`);
             const data = await res.json();
@@ -659,6 +768,7 @@
 
     function renderTrackerTable(data) {
         const container = document.getElementById('trackerData');
+        
         if (data.length === 0) {
             container.innerHTML = '<tr><td colspan="6" align="center">No records found.</td></tr>';
             return;
@@ -667,6 +777,7 @@
         container.innerHTML = data.sort((a,b) => b.id - a.id).map(row => {
             const status = row.status || 'Pending';
             const sClass = status.toLowerCase().replace(/\s/g, '');
+            
             return `
                 <tr>
                     <td>#${row.id}</td>
@@ -683,11 +794,13 @@
     function filterTrackerData() {
         const deptFilter = document.getElementById('trackDeptFilter').value.toLowerCase();
         const dateFilter = document.getElementById('trackDateFilter').value;
+        
         const filtered = trackerCache.filter(item => {
             const matchDept = !deptFilter || item.dept.toLowerCase().includes(deptFilter);
             const matchDate = !dateFilter || item.date === dateFilter;
             return matchDept && matchDate;
         });
+        
         renderTrackerTable(filtered);
     }
 
