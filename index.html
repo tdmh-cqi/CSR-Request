@@ -614,7 +614,7 @@
             photo: photos.find(p => p !== "") || "", 
             additionalNotes: document.getElementById('inputRemarks').value,
             
-            // Reverted back to standard PNG to PREVENT black boxes!
+            // MUST BE toDataURL() without arguments so it exports as standard transparent PNG.
             sigHod: sigPads.hod.isEmpty() ? "" : sigPads.hod.toDataURL(),
             sigAdmin: sigPads.admin.isEmpty() ? "" : sigPads.admin.toDataURL()
         };
