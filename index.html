@@ -34,7 +34,7 @@
 
         body::before {
             content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(240, 244, 248, 0.85), rgba(240, 244, 248, 0.85)), url('images/tdmh-background.jpg') no-repeat center center;
+            background: linear-gradient(rgba(240, 244, 248, 0.85), rgba(240, 244, 248, 0.85)), url('https://raw.githubusercontent.com/tdmh-cqi/csr2026/main/images/tdmh-background.jpg') no-repeat center center;
             background-size: cover; z-index: -1;
         }
 
@@ -104,7 +104,7 @@
 <body>
 
 <a href="." class="header-logo-link" title="Click to refresh">
-    <img src="images/tdmh-logo.png" alt="TDMH Logo" class="header-logo" onerror="this.style.display='none'">
+    <img src="https://raw.githubusercontent.com/tdmh-cqi/csr2026/main/images/tdmh-logo.png" alt="TDMH Logo" class="header-logo" onerror="this.style.display='none'">
 </a>
 
 <div class="container">
@@ -346,7 +346,7 @@
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #888;">${i}</td>
                 <td><input type="text" class="item-name" placeholder="Item description..."></td>
-                <td><input type="number" class="item-qty" placeholder="0" min="0"></td>
+                <td><input type="number" class="item-qty" placeholder="0" min="1"></td>
                 <td><input type="file" class="item-img" accept="image/*"></td>
             `;
             tbody.appendChild(tr);
@@ -400,7 +400,6 @@
         }
     }
 
-    // Shrinking images aggressively so they don't break Google Sheet's 50k character limit per cell
     const compressImage = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -413,7 +412,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.fillStyle = "#ffffff";
                     
-                    const MAX_WIDTH = 200, MAX_HEIGHT = 200; // Small width
+                    const MAX_WIDTH = 200, MAX_HEIGHT = 200; 
                     let width = img.width, height = img.height;
 
                     if (width > height) {
@@ -425,7 +424,7 @@
                     canvas.width = width; canvas.height = height;
                     ctx.fillRect(0, 0, canvas.width, canvas.height); 
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.5)); // 50% Quality
+                    resolve(canvas.toDataURL('image/jpeg', 0.5)); 
                 };
             };
             reader.onerror = error => reject(error);
@@ -457,8 +456,19 @@
             const imgFile = row.querySelector('.item-img')?.files[0];
             
             if(name && name.trim() !== "") { 
+                // NEW: Strict Quantity Validation
+                if (!qty || parseInt(qty) <= 0) {
+                    Swal.close();
+                    return Swal.fire({
+                        icon: 'warning',
+                        title: 'Quantity Required',
+                        text: `You requested the item "${name}" but did not specify a valid quantity. Please enter a quantity greater than 0.`,
+                        confirmButtonColor: '#002147'
+                    });
+                }
+                
                 items.push(name.replace(/\|/g, '')); 
-                qtys.push(qty || "0"); 
+                qtys.push(qty); 
                 if (imgFile) {
                     try { photos.push(await compressImage(imgFile)); } 
                     catch(e) { photos.push(""); }
@@ -541,21 +551,29 @@
             
             let itemsHtml = '<ul style="margin:0; padding-left:15px; padding-top: 5px; padding-bottom: 5px; font-size:12px; line-height:1.4;">';
             let releasedCount = 0;
+            let pendingCount = 0;
             
             for(let i=0; i<itemsArr.length; i++) {
                 if(itemsArr[i]) {
-                    // Logic fix: Hide checked items during Partial Release to prevent clutter
+                    // FEATURE: Hide completed items during Partial Release to prevent clutter
                     if (row.status === 'Partial Release' && checkedArr[i] === 'true') {
                         releasedCount++;
                         continue;
                     }
                     itemsHtml += `<li><b>${qtysArr[i]||'-'}x</b> ${itemsArr[i]}</li>`;
+                    pendingCount++;
                 }
             }
             itemsHtml += '</ul>';
             
+            // If ALL items happened to be checked in a partial release, show a specific message
+            if (pendingCount === 0 && row.status === 'Partial Release') {
+                itemsHtml = `<div style="font-size:12px; color:#555; font-style:italic; padding: 5px 0;">No remaining items pending.</div>`;
+            }
+            
+            // Helpful indicator for hidden items
             if (releasedCount > 0) {
-                itemsHtml += `<div style="font-size:11px; color:#2e7d32; margin-top:2px; margin-left:15px;"><i class="fas fa-check-circle"></i> ${releasedCount} item(s) already released</div>`;
+                itemsHtml += `<div style="font-size:11px; color:#2e7d32; margin-top:2px; margin-left:15px; background:#e8f5e9; padding: 4px 8px; border-radius: 4px; display: inline-block;"><i class="fas fa-check-circle"></i> ${releasedCount} item(s) already released</div>`;
             }
             
             let displayTime = row.time || '';
