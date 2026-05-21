@@ -513,6 +513,10 @@
                 <div class="form-group">
                     <label>TIME</label>
                     <input type="time" id="currentTime" name="time" required>
+                    <!-- LIVE SYNC LABEL -->
+                    <div id="timeSyncLabel" style="font-size: 11px; color: var(--color-forrelease); margin-top: 6px; font-weight: bold; display: none;">
+                        <i class="fas fa-sync fa-spin"></i> Live auto-sync active (Strict Mode)
+                    </div>
                 </div>
             </div>
 
@@ -623,12 +627,16 @@
 </div>
 
 <script>
-    // Ensure you replace this with your actual Web App URL
+    // MAKE SURE TO UPDATE THIS TO YOUR LATEST SCRIPT URL ONCE YOU DEPLOY THE NEW CODE.GS
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQwVJTvLo_W4IcxPTdcCDojC92XjS4Y5wb1r_ldwO1jXu7LJ99QBMJ_Ncl4FBek239Q/exec";
     
     let sigPads = { hod: null, admin: null };
     let trackerCache = [];
     let deptsCache = [];
+    
+    // Tracks if the user has manually changed the time
+    let userEditedTime = false;
+    let strictTimeMode = false;
 
     // --- OPTIMIZED SMOOTH "PEEL AWAY" DARK MODE (BIDIRECTIONAL FIX) ---
     function initTheme() {
@@ -696,7 +704,7 @@
         setupItemsTable();
         initPads();
         setDefaults();
-        fetchReqNumber();
+        fetchReqNumber(); // This will also pull down the strictTimeMode rule
     };
 
     async function fetchDepartments() {
@@ -819,6 +827,29 @@
         }
     }
 
+    // Controls the UI based on whether Strict Time Mode is enabled by Admin
+    function applyTimeMode() {
+        const timeEl = document.getElementById('currentTime');
+        const labelEl = document.getElementById('timeSyncLabel');
+        
+        if (!timeEl) return;
+        
+        if (strictTimeMode) {
+            timeEl.setAttribute('readonly', 'true');
+            timeEl.style.pointerEvents = 'none'; // Completely prevents clicking inside
+            timeEl.style.backgroundColor = 'var(--bg-main)'; 
+            timeEl.style.color = 'var(--text-muted)';
+            if(labelEl) labelEl.style.display = 'block';
+            userEditedTime = false; // Forces it to start ticking
+        } else {
+            timeEl.removeAttribute('readonly');
+            timeEl.style.pointerEvents = 'auto';
+            timeEl.style.backgroundColor = 'var(--input-bg)';
+            timeEl.style.color = 'var(--text-main)';
+            if(labelEl) labelEl.style.display = 'none';
+        }
+    }
+
     function setDefaults() {
         const now = new Date();
         const dateEl = document.getElementById('currentDate');
@@ -829,7 +860,21 @@
         }
         if(timeEl) {
             timeEl.value = now.toTimeString().slice(0,5);
+            
+            // Listen for manual user changes so we don't overwrite them
+            timeEl.addEventListener('change', () => { userEditedTime = true; });
+            timeEl.addEventListener('input', () => { userEditedTime = true; });
         }
+        
+        // LIVE TICKING TIME LOGIC
+        setInterval(() => {
+            // If Strict Mode is ON, we ignore userEditedTime and force the clock to sync.
+            // If Strict Mode is OFF, we respect userEditedTime and stop the clock if they touched it.
+            if ((!userEditedTime || strictTimeMode) && timeEl) {
+                const latestNow = new Date();
+                timeEl.value = latestNow.toTimeString().slice(0,5);
+            }
+        }, 1000);
     }
 
     async function fetchReqNumber() {
@@ -839,9 +884,14 @@
                 throw new Error("Could not reach backend.");
             }
             
-            const num = await res.text();
-            document.getElementById('reqNoDisplay').innerText = num;
+            const data = await res.json();
+            
+            document.getElementById('reqNoDisplay').innerText = data.reqNo;
+            strictTimeMode = data.strictTimeMode === true;
+            
+            applyTimeMode(); // Apply the locked time UI if needed
             updateStatus(true);
+            
         } catch (e) {
             document.getElementById('reqNoDisplay').innerText = "OFFLINE";
             updateStatus(false);
@@ -1089,7 +1139,9 @@
         const statusFilter = document.getElementById('trackStatusFilter')?.value || "";
         
         const filteredData = trackerCache.filter(item => {
-            const matchDept = !deptFilter || (item.dept && item.dept.toLowerCase().includes(deptFilter));
+            // EXACT MATCH fix for department filtering so "OR" doesn't trigger "LabORatory"
+            const matchDept = !deptFilter || (item.dept && item.dept.toLowerCase() === deptFilter);
+            
             const matchDate = !dateFilter || item.date === dateFilter;
             
             let itemStatus = item.status || 'Pending';
