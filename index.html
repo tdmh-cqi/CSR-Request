@@ -551,14 +551,14 @@
 
             <div class="signature-grid">
                 <div class="sig-box">
-                    <label>HEAD OF DEPARTMENT SIGNATURE</label>
-                    <div class="canvas-container">
+                    <label>HEAD OF DEPARTMENT SIGNATURE (Required)</label>
+                    <div class="canvas-container" style="border: 2px solid var(--urgent-red);">
                         <canvas id="hodPad"></canvas>
                     </div>
                     <button type="button" class="btn-clear" onclick="sigPads.hod.clear()">Clear Signature</button>
                 </div>
                 <div class="sig-box">
-                    <label>ADMIN SIGNATURE</label>
+                    <label>ADMIN SIGNATURE (If Applicable)</label>
                     <div class="canvas-container">
                         <canvas id="adminPad"></canvas>
                     </div>
@@ -945,6 +945,17 @@
 
         if (items.length === 0) {
             return Swal.fire('Empty Request', 'Please add at least one item.', 'warning');
+        }
+
+        // HOD SIGNATURE VALIDATION (MANDATORY FIX)
+        if (!sigPads.hod || sigPads.hod.isEmpty()) {
+            Swal.close();
+            return Swal.fire({
+                icon: 'error',
+                title: 'Signature Required',
+                text: 'The Head of Department signature is MANDATORY. Please secure their signature before submitting.',
+                confirmButtonColor: '#002147'
+            });
         }
 
         const payload = {
