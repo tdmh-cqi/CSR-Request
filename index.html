@@ -835,17 +835,20 @@
         if (!timeEl) return;
         
         if (strictTimeMode) {
-            timeEl.setAttribute('readonly', 'true');
-            timeEl.style.pointerEvents = 'none'; // Completely prevents clicking inside
+            // FIX: Use disabled instead of readonly. This physically blocks the browser from opening the time picker.
+            timeEl.disabled = true; 
+            timeEl.style.pointerEvents = 'none'; 
             timeEl.style.backgroundColor = 'var(--bg-main)'; 
             timeEl.style.color = 'var(--text-muted)';
+            timeEl.style.opacity = '0.7';
             if(labelEl) labelEl.style.display = 'block';
             userEditedTime = false; // Forces it to start ticking
         } else {
-            timeEl.removeAttribute('readonly');
+            timeEl.disabled = false;
             timeEl.style.pointerEvents = 'auto';
             timeEl.style.backgroundColor = 'var(--input-bg)';
             timeEl.style.color = 'var(--text-main)';
+            timeEl.style.opacity = '1';
             if(labelEl) labelEl.style.display = 'none';
         }
     }
@@ -868,6 +871,9 @@
         
         // LIVE TICKING TIME LOGIC
         setInterval(() => {
+            // FIX: Force reset userEditedTime if strict mode is on to prevent any accidental flags
+            if (strictTimeMode) userEditedTime = false; 
+
             // If Strict Mode is ON, we ignore userEditedTime and force the clock to sync.
             // If Strict Mode is OFF, we respect userEditedTime and stop the clock if they touched it.
             if ((!userEditedTime || strictTimeMode) && timeEl) {
@@ -1014,7 +1020,7 @@
             dept: document.getElementById('inputDept')?.value || "",
             email: document.getElementsByName('email')[0]?.value || "",
             date: document.getElementById('currentDate')?.value || "",
-            time: document.getElementById('currentTime')?.value || "",
+            time: document.getElementById('currentTime')?.value || "", // .value still works perfectly even when disabled=true
             reqBy: document.getElementsByName('requester')[0]?.value || "",
             itemDescs: items.join(" | "), 
             itemQtys: qtys.join(" | "), 
