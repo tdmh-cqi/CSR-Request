@@ -613,7 +613,7 @@
                     <tr>
                         <th>ID & Date</th>
                         <th>Dept</th>
-                        <th>Items Requested</th>
+                        <th>Items Requested & Internal Notes</th>
                         <th>Priority</th>
                         <th>Status</th>
                     </tr>
@@ -835,7 +835,7 @@
         if (!timeEl) return;
         
         if (strictTimeMode) {
-            // FIX: Use disabled instead of readonly. This physically blocks the browser from opening the time picker.
+            // Use disabled instead of readonly. This physically blocks the browser from opening the time picker.
             timeEl.disabled = true; 
             timeEl.style.pointerEvents = 'none'; 
             timeEl.style.backgroundColor = 'var(--bg-main)'; 
@@ -871,7 +871,7 @@
         
         // LIVE TICKING TIME LOGIC
         setInterval(() => {
-            // FIX: Force reset userEditedTime if strict mode is on to prevent any accidental flags
+            // Force reset userEditedTime if strict mode is on to prevent any accidental flags
             if (strictTimeMode) userEditedTime = false; 
 
             // If Strict Mode is ON, we ignore userEditedTime and force the clock to sync.
@@ -1020,7 +1020,7 @@
             dept: document.getElementById('inputDept')?.value || "",
             email: document.getElementsByName('email')[0]?.value || "",
             date: document.getElementById('currentDate')?.value || "",
-            time: document.getElementById('currentTime')?.value || "", // .value still works perfectly even when disabled=true
+            time: document.getElementById('currentTime')?.value || "", 
             reqBy: document.getElementsByName('requester')[0]?.value || "",
             itemDescs: items.join(" | "), 
             itemQtys: qtys.join(" | "), 
@@ -1063,7 +1063,9 @@
             const res = await fetch(`${SCRIPT_URL}?action=getRequests`);
             const responseData = await res.json();
             trackerCache = responseData.data;
-            renderTrackerTable(trackerCache);
+            
+            // BUG FIX: Do NOT render all data blindly. Always apply the active filters!
+            filterTrackerData();
         } catch (e) { 
             if(container) {
                 container.innerHTML = '<tr><td colspan="5" style="color:var(--urgent-red); text-align:center;">Failed to load tracker data.</td></tr>'; 
@@ -1080,7 +1082,7 @@
         const activeData = data.filter(item => item.status !== 'Completed' && item.status !== 'Disapproved');
         
         if (activeData.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="5" align="center" style="padding: 20px;">No active records found.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="5" align="center" style="padding: 20px;">No active records found matching criteria.</td></tr>'; 
             return; 
         }
 
@@ -1100,11 +1102,21 @@
 
             const itemsArr = String(row.items || '').split('|').map(i => i.trim());
             const qtysArr = String(row.qtys || '').split('|').map(i => i.trim());
+            const checkedArr = String(row.checkedItems || '').split('|');
+            const notesArr = String(row.itemNotes || '').split('|');
             
-            let itemsHtml = '<ul style="margin:0; padding-left:15px; padding-top: 5px; padding-bottom: 5px; font-size:12px; line-height:1.4;">';
+            // SMART CONNECTION: Now shows the requester what the admin ticked or noted specifically!
+            let itemsHtml = '<ul style="margin:0; padding-left:15px; padding-top: 5px; padding-bottom: 5px; font-size:13px; line-height:1.6;">';
             for(let i=0; i < itemsArr.length; i++) { 
                 if(itemsArr[i]) { 
-                    itemsHtml += `<li><b>${qtysArr[i]||'-'}x</b> ${itemsArr[i]}</li>`; 
+                    let isReady = checkedArr[i] === 'true';
+                    let icon = isReady ? '<i class="fas fa-check-circle" style="color: #2e7d32;" title="Ready for Pick-up"></i> ' : '';
+                    let noteStr = notesArr[i] ? ` <br><span style="color:#d97706; font-size:11px; font-style:italic; background: rgba(217, 119, 6, 0.1); padding: 2px 4px; border-radius: 3px;">Note: ${notesArr[i]}</span>` : '';
+                    
+                    itemsHtml += `
+                        <li style="${isReady ? 'color: #2e7d32;' : ''}">
+                            ${icon}<b>${qtysArr[i]||'-'}x</b> <span style="${isReady ? 'text-decoration: line-through; opacity: 0.8;' : ''}">${itemsArr[i]}</span>${noteStr}
+                        </li>`; 
                 } 
             }
             itemsHtml += '</ul>';
@@ -1140,13 +1152,13 @@
     }
 
     function filterTrackerData() {
-        const deptFilter = (document.getElementById('trackDeptFilter')?.value || "").toLowerCase();
+        const deptFilter = document.getElementById('trackDeptFilter')?.value || "";
         const dateFilter = document.getElementById('trackDateFilter')?.value || "";
         const statusFilter = document.getElementById('trackStatusFilter')?.value || "";
         
         const filteredData = trackerCache.filter(item => {
-            // EXACT MATCH fix for department filtering so "OR" doesn't trigger "LabORatory"
-            const matchDept = !deptFilter || (item.dept && item.dept.toLowerCase() === deptFilter);
+            // EXACT MATCH FIX: Using exact string match instead of .includes() preventing "Laboratory" from matching "OR"
+            const matchDept = !deptFilter || (item.dept === deptFilter);
             
             const matchDate = !dateFilter || item.date === dateFilter;
             
@@ -1175,6 +1187,7 @@
         if(dateFilterEl) dateFilterEl.value = '';
         if(statusFilterEl) statusFilterEl.value = '';
         
+        // Render from cache
         renderTrackerTable(trackerCache);
     }
 </script>
