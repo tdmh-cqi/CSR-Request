@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TDMH CSR Requisition Form</title>
     
+    <!-- FIX: Added favicon to stop 404 console error -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/tdmh-cqi/csr2026/main/images/tdmh-logo.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -783,11 +786,12 @@
         
         for (let i = 1; i <= 50; i++) {
             const tr = document.createElement('tr');
+            // FIX: Added 'name' attribute to inputs to stop "neither id nor name" console warning
             tr.innerHTML = `
                 <td style="font-weight: bold; color: var(--text-muted);">${i}</td>
-                <td><input type="text" class="item-name" placeholder="Item description..."></td>
-                <td><input type="number" class="item-qty" placeholder="0" min="1"></td>
-                <td><input type="file" class="item-img" accept="image/*"></td>
+                <td><input type="text" class="item-name" name="item_desc_${i}" placeholder="Item description..."></td>
+                <td><input type="number" class="item-qty" name="item_qty_${i}" placeholder="0" min="1"></td>
+                <td><input type="file" class="item-img" name="item_photo_${i}" accept="image/*"></td>
             `;
             frag.appendChild(tr);
         }
