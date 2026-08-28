@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TDMH CSR Requisition Form</title>
     
-    <!-- FIX: Added favicon to stop 404 console error -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/tdmh-cqi/csr2026/main/images/tdmh-logo.png">
+    <!-- FIX: Updated Favicon to the official square TD Logo -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/tdmh-cqi/CSR-Request/main/images/td-logo.png">
     
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -483,7 +483,7 @@
         <form id="mainForm">
             <div class="form-row">
                 <div class="form-group">
-                    <label>PRIORITY LEVEL</label>
+                    <label for="priority">PRIORITY LEVEL</label>
                     <select id="priority" name="priority">
                         <option value="Regular">Regular</option>
                         <option value="Urgent">Urgent 🔥</option>
@@ -497,24 +497,24 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>DEPARTMENT</label>
+                    <label for="inputDept">DEPARTMENT</label>
                     <select name="department" id="inputDept" required>
                         <option value="" disabled selected>Loading Departments...</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>EMAIL ADDRESS (For Pink Copy Receipt)</label>
-                    <input type="email" name="email" required placeholder="staff@hospital.com">
+                    <label for="inputEmail">EMAIL ADDRESS (For Pink Copy Receipt)</label>
+                    <input type="email" id="inputEmail" name="email" required placeholder="staff@hospital.com" autocomplete="email">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>DATE</label>
+                    <label for="currentDate">DATE</label>
                     <input type="date" id="currentDate" name="date" required>
                 </div>
                 <div class="form-group">
-                    <label>TIME</label>
+                    <label for="currentTime">TIME</label>
                     <input type="time" id="currentTime" name="time" required>
                     <!-- LIVE SYNC LABEL -->
                     <div id="timeSyncLabel" style="font-size: 11px; color: var(--color-forrelease); margin-top: 6px; font-weight: bold; display: none;">
@@ -547,13 +547,13 @@
             </div>
 
             <div class="form-group">
-                <label>REMARKS / SPECIAL INSTRUCTIONS</label>
+                <label for="inputRemarks">REMARKS / SPECIAL INSTRUCTIONS</label>
                 <textarea name="remarks" id="inputRemarks" rows="3"></textarea>
             </div>
 
             <div class="form-group">
-                <label>REQUESTED BY (Full Name)</label>
-                <input type="text" name="requester" required>
+                <label for="inputRequester">REQUESTED BY (Full Name)</label>
+                <input type="text" id="inputRequester" name="requester" required autocomplete="name">
             </div>
 
             <div class="signature-grid">
