@@ -481,8 +481,11 @@
         </div>
 
         <!-- NEW: CLOSED BANNER -->
-        <div id="closedBanner" style="display: none; background: var(--urgent-red); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(220,53,69,0.3);">
-            <i class="fas fa-lock"></i> THE CENTRAL SUPPLY ROOM IS CURRENTLY NOT ACCEPTING NEW REQUESTS
+        <div id="closedBanner" style="display: none; background: var(--urgent-red); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 16px; line-height: 1.5; box-shadow: 0 4px 15px rgba(220,53,69,0.3);">
+            <i class="fas fa-lock"></i> THIS SYSTEM IS NO LONGER ACCEPTING NEW REQUESTS.<br>To file a new request, please proceed to the new official CSR system using the link below:<br>
+            <a href="https://tdmhcore.io/csr" target="_blank" style="color: #fff; text-decoration: underline; background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 6px; display: inline-block; margin-top: 12px; font-size: 18px;">
+                <i class="fas fa-external-link-alt"></i> https://tdmhcore.io/csr
+            </a>
         </div>
 
         <form id="mainForm">
@@ -928,9 +931,9 @@
             }
 
             Swal.fire({
-                icon: 'error',
+                icon: 'info',
                 title: 'System Closed',
-                text: 'The CSR Department is currently not accepting new requests.',
+                html: '<p style="line-height: 1.5;">The CSR Department is no longer accepting new requests through this legacy system. However, live tracking for all pending requests submitted prior to this transition remains active.</p><div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #002147; font-size: 0.9em; text-align: left; color: #333;"><i><b>Note:</b> You can continue to monitor your previously submitted requests via the <b>"Track Requests"</b> tab until they are fully processed.</i></div>',
                 confirmButtonColor: '#002147'
             });
         } else {
