@@ -908,27 +908,25 @@
         applyTimeMode(); // Apply the locked time UI if needed
         updateStatus(true);
         
-        // NEW: Check if the system is closed
+        // Check if the system is closed
         if (data.acceptRequests === false) {
-            systemClosed = true; // <--- ADD THIS LINE
+            systemClosed = true;
             document.getElementById('closedBanner').style.display = 'block';
-        } else {
-            // Ensure form stays open if true
-            systemClosed = false; // <--- ADD THIS LINE
-            document.getElementById('closedBanner').style.display = 'none';
-            
+
             // Disable the entire form to prevent typing
             const form = document.getElementById('mainForm');
-            form.style.pointerEvents = 'none';
-            form.style.opacity = '0.6';
-            
+            if (form) {
+                form.style.pointerEvents = 'none';
+                form.style.opacity = '0.6';
+            }
+
             // Change submit button text
-            const submitBtn = form.querySelector('button[type="submit"]');
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
             if (submitBtn) {
                 submitBtn.innerHTML = '<i class="fas fa-ban"></i> SYSTEM CLOSED';
                 submitBtn.style.background = 'var(--text-muted)';
             }
-            
+
             Swal.fire({
                 icon: 'error',
                 title: 'System Closed',
@@ -936,10 +934,14 @@
                 confirmButtonColor: '#002147'
             });
         } else {
-            // Ensure form stays open if true
+            systemClosed = false;
             document.getElementById('closedBanner').style.display = 'none';
-            document.getElementById('mainForm').style.pointerEvents = 'auto';
-            document.getElementById('mainForm').style.opacity = '1';
+
+            const form = document.getElementById('mainForm');
+            if (form) {
+                form.style.pointerEvents = 'auto';
+                form.style.opacity = '1';
+            }
         }
             
         } catch (e) {
