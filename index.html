@@ -1,3 +1,4 @@
+Frontend Code Request Site:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1117,7 +1118,7 @@
             filterTrackerData();
         } catch (e) { 
             if(container) {
-                container.innerHTML = '<tr><td colspan="5" style="color:var(--urgent-red); text-align:center;">Failed to load tracker data.</td></tr>'; 
+                container.innerHTML = `<tr><td colspan="5" style="color:var(--urgent-red); text-align:center;"><strong>Crash Report:</strong> ${e.message}</td></tr>`; 
             }
         }
     }
