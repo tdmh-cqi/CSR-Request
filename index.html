@@ -1,3 +1,4 @@
+Frontend Code Request Site:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -480,6 +481,11 @@
             <div class="subtitle">Requisition Slip 2026</div>
         </div>
 
+        <!-- NEW: CLOSED BANNER -->
+        <div id="closedBanner" style="display: none; background: var(--urgent-red); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(220,53,69,0.3);">
+            <i class="fas fa-lock"></i> THE CENTRAL SUPPLY ROOM IS CURRENTLY NOT ACCEPTING NEW REQUESTS
+        </div>
+
         <form id="mainForm">
             <div class="form-row">
                 <div class="form-group">
@@ -640,6 +646,7 @@
     // Tracks if the user has manually changed the time
     let userEditedTime = false;
     let strictTimeMode = false;
+    let systemClosed = false;
 
     // --- OPTIMIZED SMOOTH "PEEL AWAY" DARK MODE (BIDIRECTIONAL FIX) ---
     function initTheme() {
@@ -895,12 +902,46 @@
             }
             
             const data = await res.json();
+        
+        document.getElementById('reqNoDisplay').innerText = data.reqNo;
+        strictTimeMode = data.strictTimeMode === true;
+        
+        applyTimeMode(); // Apply the locked time UI if needed
+        updateStatus(true);
+        
+        // NEW: Check if the system is closed
+        if (data.acceptRequests === false) {
+            systemClosed = true; // <--- ADD THIS LINE
+            document.getElementById('closedBanner').style.display = 'block';
+        } else {
+            // Ensure form stays open if true
+            systemClosed = false; // <--- ADD THIS LINE
+            document.getElementById('closedBanner').style.display = 'none';
             
-            document.getElementById('reqNoDisplay').innerText = data.reqNo;
-            strictTimeMode = data.strictTimeMode === true;
+            // Disable the entire form to prevent typing
+            const form = document.getElementById('mainForm');
+            form.style.pointerEvents = 'none';
+            form.style.opacity = '0.6';
             
-            applyTimeMode(); // Apply the locked time UI if needed
-            updateStatus(true);
+            // Change submit button text
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-ban"></i> SYSTEM CLOSED';
+                submitBtn.style.background = 'var(--text-muted)';
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'System Closed',
+                text: 'The CSR Department is currently not accepting new requests.',
+                confirmButtonColor: '#002147'
+            });
+        } else {
+            // Ensure form stays open if true
+            document.getElementById('closedBanner').style.display = 'none';
+            document.getElementById('mainForm').style.pointerEvents = 'auto';
+            document.getElementById('mainForm').style.opacity = '1';
+        }
             
         } catch (e) {
             document.getElementById('reqNoDisplay').innerText = "OFFLINE";
@@ -1083,17 +1124,41 @@
         
         tbody.innerHTML = '';
         
-        const activeData = data.filter(item => item.status !== 'Completed' && item.status !== 'Disapproved');
+        // 1. Check if the GLOBAL queue is completely empty
+        const globalPendingCount = trackerCache.filter(item => item.status !== 'Completed' && item.status !== 'Disapproved').length;
         
-        if (activeData.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="5" align="center" style="padding: 20px;">No active records found matching criteria.</td></tr>'; 
+        // 2. Filter the data currently being viewed
+        let displayData = data.filter(item => item.status !== 'Completed' && item.status !== 'Disapproved');
+        
+        // 3. AUTO-HISTORY MAGIC
+        const headerTitle = document.querySelector('#tab-track .header h1');
+        const headerSub = document.querySelector('#tab-track .header p');
+        
+        if (systemClosed && globalPendingCount === 0) {
+            // System is closed AND there are 0 pending requests left in the hospital!
+            if(headerTitle) headerTitle.innerText = "Request History Archive";
+            if(headerSub) headerSub.innerText = "All operations ceased. Displaying past completed and disapproved records.";
+            
+            // Show ALL data (including completed/disapproved) instead of just active ones
+            displayData = data.slice(0, 100); // Limit to latest 100 so it doesn't crash the browser
+            
+            // Hide the status filter dropdown since it's no longer needed
+            document.getElementById('trackStatusFilter').parentElement.style.display = 'none';
+        } else {
+            // Normal Live Mode
+            if(headerTitle) headerTitle.innerText = "Live Request Tracker";
+            if(headerSub) headerSub.innerText = "Active and processing submissions from all departments";
+            document.getElementById('trackStatusFilter').parentElement.style.display = 'block';
+        }
+        
+        if (displayData.length === 0) { 
+            tbody.innerHTML = '<tr><td colspan="5" align="center" style="padding: 20px;">No records found matching criteria.</td></tr>'; 
             return; 
         }
 
         const frag = document.createDocumentFragment();
         
-        activeData.sort((a,b) => b.id - a.id).forEach(row => {
-            const tr = document.createElement('tr');
+        displayData.sort((a,b) => b.id - a.id).forEach(row => {
             
             let status = row.status || 'Pending';
             let displayStatus = status;
